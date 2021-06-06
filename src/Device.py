@@ -20,7 +20,7 @@ class Device:
 
     def find_node(self, query, wait=DEFAULT_WAIT):
         start = datetime.now()
-        logging.debug(f'Device#find_node {query}')
+        logging.info(f'Device#find_node {query}')
 
         while (datetime.now() - start).total_seconds() <= wait:
             try:
@@ -33,6 +33,8 @@ class Device:
         raise ValueError(f'Node with query "{query}" not found after {wait} seconds')
 
     def input_text(self, text, virtual_keyboard=False):
+        logging.info(f'Input text: {text}')
+
         # adb shell ime set com.android.adbkeyboard/.AdbIME
         # only works if: ADBKeyboard is active + Virtual Keyboard is configured to be shown in screen
         if virtual_keyboard:
@@ -44,7 +46,7 @@ class Device:
     def tap_by_resource_id(self, resource_id, wait=DEFAULT_WAIT):
         instagram_resource_id = f'{IG_PREFIX}/{resource_id}'
 
-        logging.debug(f'Device#tap {instagram_resource_id}')
+        logging.info(f'Device#tap {instagram_resource_id}')
 
         node = self.find_node(f'@resource-id="{instagram_resource_id}"', wait)
         point = XMLParser.get_point(node)
@@ -54,7 +56,7 @@ class Device:
     def tap_by_resource_id_and_text(self, resource_id, text, wait=DEFAULT_WAIT):
         instagram_resource_id = f'{IG_PREFIX}/{resource_id}'
 
-        logging.debug(f'Device#tap {instagram_resource_id} and "{text}"')
+        logging.info(f'Device#tap {instagram_resource_id} and "{text}"')
 
         node = self.find_node(f'@resource-id="{instagram_resource_id}" and @text="{text}"', wait)
         point = XMLParser.get_point(node)
@@ -62,7 +64,7 @@ class Device:
         self._tap(point)
 
     def tap_by_content_desc(self, content_desc):
-        logging.debug(f'Device#tap {content_desc}')
+        logging.info(f'Device#tap {content_desc}')
 
         node = self.find_node(f'@content-desc="{content_desc}"')
         point = XMLParser.get_point(node)
@@ -70,7 +72,7 @@ class Device:
         self._tap(point)
 
     def swipe_numberpicker(self, top_value, bottom_value, expected_value):
-        logging.debug(f'Device#swipe_numberpicker {top_value} {bottom_value} {expected_value}')
+        logging.info(f'Device#swipe_numberpicker {top_value} {bottom_value} {expected_value}')
 
         node1 = self.find_node(f'@text="{top_value}"')
         point1 = XMLParser.get_point(node1)
@@ -88,7 +90,7 @@ class Device:
         raise ValueError(f'Could not reach expected value: "{expected_value}"')
 
     def swipe_refresh(self):
-        logging.debug(f'Device#swipe_refresh')
+        logging.info(f'Device#swipe_refresh')
 
         point1 = Point(300, 100)
         point2 = Point(300, 200)
@@ -98,7 +100,7 @@ class Device:
     def get_attr_by_resource_id(self, resource_id, attr, wait=DEFAULT_WAIT):
         instagram_resource_id = f'{IG_PREFIX}/{resource_id}'
 
-        logging.debug(f'Device#get_attr {attr} {instagram_resource_id}')
+        logging.info(f'Device#get_attr {attr} {instagram_resource_id}')
 
         node = self.find_node(f'@resource-id="{instagram_resource_id}"', wait)
         return node.get(attr)
@@ -141,12 +143,12 @@ class Device:
         return XMLParser(self._dump())
 
     def _tap(self, point):
-        logging.debug(f'Device#tap {point}')
+        logging.info(f'Device#tap {point}')
 
         self._shell(f'input tap {point.x} {point.y}')
 
     def _swipe(self, point1, point2, time=0):
-        logging.debug(f'Device#swipe {point1} {point2}')
+        logging.info(f'Device#swipe {point1} {point2}')
 
         self._shell(f'input touchscreen swipe {point1.x} {point1.y} {point2.x} {point2.y} {time}')
 

@@ -7,6 +7,8 @@ import json
 from src.Device import Device
 from src.SMSHubService import PhoneNumber
 
+MAX_ERROR = 2
+
 
 @dataclass
 class Bot:
@@ -28,7 +30,7 @@ class Bot:
 
         # phone_number = input('Phone Number: ')
         sms_service.get_balance()
-        logging.debug('Getting phone number...')
+        logging.info('Getting phone number...')
         phone_number = sms_service.get_number()
         self.device.input_text(phone_number.number[1:])
         time.sleep(len(phone_number.number))
@@ -37,7 +39,7 @@ class Bot:
         sms_service.set_status_ready(phone_number)
 
         # code = input('Code: ')
-        logging.debug(f'Waiting for code for {phone_number.number}')
+        logging.info(f'Waiting for code for {phone_number.number}')
         code = sms_service.wait_for_code(phone_number)
 
         if code is None:
@@ -100,45 +102,61 @@ class Bot:
         time.sleep(30)
         logging.info('Done')
 
-    def dm(self, sqs_messages, spintax_message):
-        logging.info(f'Will DM {len(sqs_messages)} users:')
+    def dm(self, queue, message_count, spintax_message):
+        logging.info(f'Will DM {message_count} users')
 
         logging.info('Launching app')
         self.device.launch_app()
-        time.sleep(15)
+        time.sleep(10)
 
         self.device.swipe_refresh()
-        time.sleep(30)
+        time.sleep(10)
 
         try:
             self.device.tap_by_resource_id('action_bar_inbox_button', 5)
         except ValueError:
             pass
 
+        n_error = 0
         try:
-            i = 1
-            for sqs_message in sqs_messages:
+            for i in range(message_count):
+                sqs_message = Bot._get_message(queue)
+
                 profile = json.loads(sqs_message.body)
                 username = profile['username']
 
                 logging.info(f'#{i} Sending DM to: @{username}')
                 self.device.swipe_refresh()
-                time.sleep(15)
+                time.sleep(5)
 
                 self.device.tap_by_resource_id('search_edit_text')
                 self.device.input_text(username)
-                time.sleep(len(username))
+                time.sleep(len(username) / 10)
 
                 try:
                     self.device.tap_by_resource_id_and_text('row_inbox_digest', username, 30)
                 except ValueError:
-                    self.device.tap_by_resource_id_and_text('row_inbox_username', username, 5)
+                    try:
+                        self.device.tap_by_resource_id_and_text('row_inbox_username', username, 5)
+                    except ValueError:
+                        logging.error(f'User {username} not found. Removing message')
+                        sqs_message.delete()
+
+                        n_error += 1
+                        logging.info(f'{MAX_ERROR - n_error} errors left')
+
+                        if MAX_ERROR - n_error <= 0:
+                            logging.info('Exiting')
+                            raise ValueError(f'Failed {n_error} when trying to find users')
+
+                        logging.info(f'Going to next message')
+                        continue
 
                 self.device.tap_by_resource_id('row_thread_composer_edittext')
                 message = spintax.spin(spintax_message)
                 logging.info(f'Message: {message}')
                 self.device.input_text(message, True)
-                time.sleep(len(message) / 10)
+                time.sleep(len(message) / 20)
                 self.device.tap_by_resource_id('row_thread_composer_button_send')
 
                 time.sleep(5)
@@ -147,7 +165,25 @@ class Bot:
                 sqs_message.delete()
 
                 i += 1
+
+            return True
         except ValueError as err:
             self.device.debug()
 
             raise err
+
+    @staticmethod
+    def _get_message(queue):
+        logging.info(f'Getting message from SQS')
+        tries = 3
+
+        while tries > 0:
+            messages = queue.receive_messages(MaxNumberOfMessages=1)
+
+            if len(messages) > 0:
+                logging.info(f'Got message: {messages[0]}')
+                return messages[0]
+
+            tries -= 1
+
+        return None

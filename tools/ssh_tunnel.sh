@@ -1,1 +1,1 @@
-ssh -i ~/.ssh/ricardo_aws.pem -NL 5555:localhost:5555 shell@$1
+ssh -i ~/.ssh/ricardo_aws.pem -NL $2:localhost:5555 shell@$1
