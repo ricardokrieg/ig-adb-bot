@@ -2,6 +2,7 @@ import logging
 import sys
 from ppadb.client import Client as AdbClient
 import boto3
+import spintax
 
 from src.Bot import Bot
 from src.Device import Device
@@ -34,6 +35,23 @@ def find_device(devices, serial):
     return None
 
 
+def get_messages(profile):
+    name = profile['full_name']
+    tagger_name = profile['tagger_name']
+    link = profile['link']
+
+    spintax_message1 = "{Hi|Hey}, %s. How are you?\n%s tagged you in one of our giveaways and {you won|you just won} " \
+                       "{a brand new iphone|an iphone}! What a luck!" %(name, tagger_name)
+    message1 = spintax.spin(spintax_message1)
+
+    spintax_message2 = "{Now you need to access this site and claim|Access this site to claim} your prize.\nHurry, " \
+                       "because if you don't claim it in the next hours we will give it to another participant\n"
+    message2 = spintax.spin(spintax_message2)
+
+    message3 = link
+
+    return message1, message2, message3
+
 if __name__ == '__main__':
     client = AdbClient(host=HOST, port=PORT)
 
@@ -51,10 +69,6 @@ if __name__ == '__main__':
     logging.info(f'Connected to {adb_device.serial}')
 
     device = Device(adb_device)
-
     bot = Bot(device)
 
-    # spintax_message = '{Oi|Oii|Oie}. Tem {várias fotos|um monte de fotos} de gatinhas nesse perfil @lindasbrasileiras20. {E de vez em quando a gente posta nudes nos stories|A gente posta nudes nos stories de vez {em quando|em quando também}| A gente também posta nudes nos stories} {🍑|🔞|🔥}. {Segue a gente lá|Segue a gente|Vai lá dar uma olhada} {😘|💋|😗|😙|😚}'
-    spintax_message = 'http://swissladies.club/'
-
-    bot.dm(queue, MESSAGE_COUNT, spintax_message)
+    bot.dm(queue, MESSAGE_COUNT, get_messages)

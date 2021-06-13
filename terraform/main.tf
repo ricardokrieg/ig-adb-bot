@@ -15,7 +15,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "genymotion" {
-  count                  = 2
+  count                  = 4
   ami                    = "ami-0ccf2d40012a1d067"
   instance_type          = "t3.small"
   key_name               = "ricardo_aws"

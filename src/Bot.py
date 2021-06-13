@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 import time
-import spintax
 import logging
 import json
 
 from src.Device import Device
-from src.SMSHubService import PhoneNumber
 
 MAX_ERROR = 2
 
@@ -102,7 +100,7 @@ class Bot:
         time.sleep(30)
         logging.info('Done')
 
-    def dm(self, queue, message_count, spintax_message):
+    def dm(self, queue, message_count, get_messages):
         logging.info(f'Will DM {message_count} users')
 
         logging.info('Launching app')
@@ -152,14 +150,16 @@ class Bot:
                         logging.info(f'Going to next message')
                         continue
 
-                self.device.tap_by_resource_id('row_thread_composer_edittext')
-                message = spintax.spin(spintax_message)
-                logging.info(f'Message: {message}')
-                self.device.input_text(message, True)
-                time.sleep(len(message) / 20)
-                self.device.tap_by_resource_id('row_thread_composer_button_send')
+                for message in get_messages(profile):
+                    self.device.tap_by_resource_id('row_thread_composer_edittext')
 
-                time.sleep(5)
+                    logging.info(f'Message: {message}')
+
+                    self.device.input_text(message, True)
+                    time.sleep(len(message) / 20)
+                    self.device.tap_by_resource_id('row_thread_composer_button_send')
+
+                    time.sleep(5)
                 self.device.tap_by_resource_id('action_bar_button_back')
 
                 sqs_message.delete()
@@ -171,6 +171,24 @@ class Bot:
             self.device.debug()
 
             raise err
+
+    def follow(self, username):
+        logging.info(f'Will follow {username}')
+
+        logging.info(f'Going to Search')
+        self.device.tap_by_content_desc('Search and Explore')
+        self.device.tap_by_resource_id('action_bar_search_edit_text')
+
+        self.device.input_text(username)
+        time.sleep(len(username) / 10)
+
+        try:
+            self.device.tap_by_resource_id_and_text('row_search_user_username', username, 30)
+        except ValueError:
+            self.device.tap_by_resource_id_and_text('row_search_digest', username, 30)
+
+        self.device.tap_by_text('Follow')
+        time.sleep(5)
 
     @staticmethod
     def _get_message(queue):

@@ -63,6 +63,14 @@ class Device:
 
         self._tap(point)
 
+    def tap_by_text(self, text, wait=DEFAULT_WAIT):
+        logging.info(f'Device#tap "{text}"')
+
+        node = self.find_node(f'@text="{text}"', wait)
+        point = XMLParser.get_point(node)
+
+        self._tap(point)
+
     def tap_by_content_desc(self, content_desc):
         logging.info(f'Device#tap {content_desc}')
 
