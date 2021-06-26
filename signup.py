@@ -32,6 +32,8 @@ if __name__ == '__main__':
     deviceAddress = sys.argv[1]
     accountName = sys.argv[2]
     password = 'xxx123xxx'
+    image = sys.argv[3]
+    username = sys.argv[4] if len(sys.argv) == 5 else None
 
     logging.debug(f'Connecting to device "{deviceAddress}"')
     adb_device = find_device(devices, deviceAddress)
@@ -42,4 +44,4 @@ if __name__ == '__main__':
     sms_service = SMSHubService()
     bot = Bot(device)
 
-    bot.signup(accountName, password, sms_service)
+    bot.signup(username, accountName, password, image, sms_service)

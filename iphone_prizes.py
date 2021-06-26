@@ -52,6 +52,29 @@ def get_messages(profile):
 
     return message1, message2, message3
 
+def get_messages2(profile):
+    name = profile['full_name']
+    tagger_name = profile['tagger_name']
+    link = profile['link']
+
+    spintax_message1 = "{Hi|Hey}, %s. How are you?\n%s tagged you in one of our giveaways and {you won|you just won} " \
+                       "{a brand new iphone|an iphone}! What a luck!\n" \
+                       "Please, {reply to this message|reply here} {to get|so that I give you} instructions on how to {receive|get} your {prize|phone}." %(name, tagger_name)
+    message1 = spintax.spin(spintax_message1)
+
+    return message1,
+
+def get_messages_br(profile):
+    name = profile['full_name']
+    tagger_name = profile['tagger_name']
+    link = profile['link']
+
+    spintax_message1 = "{Oi|Bom dia}, %s. Tudo bem?\n%s {te marcou|marcou você} em um de nossos sorteios e você {ganhou um celular|foi um dos sorteados}!\n" \
+                       "Por favor, responde essa mensagem pra eu te passar as instruções pra você receber o prêmio" %(name, tagger_name)
+    message1 = spintax.spin(spintax_message1)
+
+    return message1,
+
 if __name__ == '__main__':
     client = AdbClient(host=HOST, port=PORT)
 
@@ -71,4 +94,4 @@ if __name__ == '__main__':
     device = Device(adb_device)
     bot = Bot(device)
 
-    bot.dm(queue, MESSAGE_COUNT, get_messages)
+    bot.dm(queue, MESSAGE_COUNT, get_messages_br)

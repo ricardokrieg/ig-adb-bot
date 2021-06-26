@@ -12,7 +12,7 @@ MAX_ERROR = 2
 class Bot:
     device: Device
 
-    def signup(self, name, password, sms_service):
+    def signup(self, username, name, password, image, sms_service):
         logging.info('Launching app')
         self.device.launch_app()
         time.sleep(15)
@@ -69,12 +69,26 @@ class Bot:
         self.device.swipe_numberpicker(2019, 2020, year)
         self.device.tap_by_resource_id('button_text')
 
-        try:
-            username = self.device.get_attr_by_resource_id('field_title_second_line', 'text', 10)
-        except ValueError:
-            username = self.device.get_attr_by_resource_id('field_title', 'text', 10)
-            username = username.split("\n")[1].replace('?', '')
-        logging.info(f'Username: {username}')
+        if username is None:
+            try:
+                username = self.device.get_attr_by_resource_id('field_title_second_line', 'text', 10)
+            except ValueError:
+                username = self.device.get_attr_by_resource_id('field_title', 'text', 10)
+                username = username.split("\n")[1].replace('?', '')
+            logging.info(f'Username: {username}')
+        else:
+            logging.info('Changing username')
+            self.device.tap_by_resource_id('change_username')
+
+            logging.info('Clearing auto-generated username')
+            self.device.tap_by_resource_id('username')
+            self.device.clear_input()
+
+            logging.info(f'Setting username to {username}')
+            self.device.input_text(username)
+            time.sleep(len(username))
+
+            logging.info(f'Username: {username}')
 
         logging.info('Clicking in Next')
         self.device.tap_by_resource_id('button_text')
@@ -83,10 +97,10 @@ class Bot:
         self.device.tap_by_resource_id('skip_button')
         self.device.tap_by_resource_id('negative_button')
 
-        logging.info('Picking photo')
+        logging.info(f'Picking photo; {image}')
         self.device.tap_by_resource_id('button_text')
         self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Choose From Library')
-        self.device.pick_file('ig_image.jpeg')
+        self.device.pick_file(image)
         self.device.tap_by_resource_id('save')
         self.device.tap_by_resource_id('button_text')
 
@@ -121,9 +135,11 @@ class Bot:
                 sqs_message = Bot._get_message(queue)
 
                 profile = json.loads(sqs_message.body)
+                #profile = json.loads('{"username":"ricardokrieg","full_name":"Ricardo Franco Andrade"}')
+                #profile = json.loads('{"username":"dorinhafandrade","full_name":"Dorinha Ferreira Andrade"}')
                 username = profile['username']
 
-                logging.info(f'#{i} Sending DM to: @{username}')
+                logging.info(f'#{i+1} Sending DM to: @{username}')
                 self.device.swipe_refresh()
                 time.sleep(5)
 

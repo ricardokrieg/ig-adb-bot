@@ -79,6 +79,10 @@ class Device:
 
         self._tap(point)
 
+    def clear_input(self):
+        self._shell(f'input keyevent KEYCODE_MOVE_END')
+        self._shell(f'input keyevent --longpress {"KEYCODE_DEL " * 250}')
+
     def swipe_numberpicker(self, top_value, bottom_value, expected_value):
         logging.info(f'Device#swipe_numberpicker {top_value} {bottom_value} {expected_value}')
 
