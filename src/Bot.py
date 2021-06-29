@@ -37,8 +37,7 @@ class Bot:
             self.device.input_text(sms_service.get_country_code())
             time.sleep(2)
             self.device.tap_by_resource_id_and_text('row_simple_text_textview', sms_service.get_country_text())
-            
-            # phone_number = input('Phone Number: ')
+
             sms_service.get_balance()
             logging.info('Getting phone number...')
             phone_number = sms_service.get_number()
@@ -70,7 +69,6 @@ class Bot:
         if flagged:
             raise ValueError(f'Could not get a valid phone number after 3 tries')
 
-        # code = input('Code: ')
         logging.info(f'Waiting for code for {phone_number.number}')
         code = sms_service.wait_for_code(phone_number)
 
@@ -132,16 +130,16 @@ class Bot:
         self.device.tap_by_resource_id('skip_button')
         self.device.tap_by_resource_id('negative_button')
         
-        if False:
+        if image is None:
+            logging.info('Skipping Profile Photo')
+            self.device.tap_by_resource_id('skip_button')
+        else:
             logging.info(f'Picking photo; {image}')
             self.device.tap_by_resource_id('button_text')
             self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Choose From Library')
             self.device.pick_file(image)
             self.device.tap_by_resource_id('save')
             self.device.tap_by_resource_id('button_text')
-        else:
-            logging.info('Skipping Profile Photo')
-            self.device.tap_by_resource_id('skip_button')
 
         follow = random.choice([7, 8, 9])
         logging.info(f'Following {follow} recommended profiles')
