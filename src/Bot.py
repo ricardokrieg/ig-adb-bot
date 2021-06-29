@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import time
 import logging
 import json
+import string
+import random
 
 from src.Device import Device
 
@@ -12,29 +14,61 @@ MAX_ERROR = 2
 class Bot:
     device: Device
 
-    def signup(self, username, name, password, image, sms_service):
+    def signup(self, username, name, image, sms_service, callback=None):
+        logging.info('Closing Intent Filter...')
+        self.device.close_intent_filter()
+        
         logging.info('Launching app')
         self.device.launch_app()
         time.sleep(15)
 
         logging.info('Clicking in Sign Up button')
         self.device.tap_by_resource_id('sign_up_with_email_or_phone')
+        
+        phone_number = ''
+        flagged = False
+        tries = 3
+        
+        while tries > 0:
+            tries -= 1
 
-        logging.info('Selecting country: Russia')
-        self.device.tap_by_resource_id('country_code_picker')
-        self.device.input_text('+7')
-        time.sleep(2)
-        self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Russia (+7)')
-
-        # phone_number = input('Phone Number: ')
-        sms_service.get_balance()
-        logging.info('Getting phone number...')
-        phone_number = sms_service.get_number()
-        self.device.input_text(phone_number.number[1:])
-        time.sleep(len(phone_number.number))
-
-        self.device.tap_by_resource_id('button_text')
-        sms_service.set_status_ready(phone_number)
+            logging.info(f'Selecting country: {sms_service.get_country_text()}')
+            self.device.tap_by_resource_id('country_code_picker')
+            self.device.input_text(sms_service.get_country_code())
+            time.sleep(2)
+            self.device.tap_by_resource_id_and_text('row_simple_text_textview', sms_service.get_country_text())
+            
+            # phone_number = input('Phone Number: ')
+            sms_service.get_balance()
+            logging.info('Getting phone number...')
+            phone_number = sms_service.get_number()
+            self.device.tap_by_resource_id('phone_field')
+            self.device.input_text(phone_number.number[sms_service.get_country_code_size():])
+            time.sleep(len(phone_number.number))
+            
+            self.device.tap_by_resource_id('button_text')
+            
+            flagged = False
+            try:
+                self.device.find_node(f'@resource-id="com.instagram.android:id/notification_bar"', 20)
+                flagged = True
+                
+                sms_service.set_status_cancel(phone_number)
+                logging.error(f'Phone Number {phone_number.number} is flagged')
+                
+                logging.info('Clearing phone number')
+                self.device.tap_by_resource_id('phone_field')
+                self.device.clear_input()
+                
+                logging.info('Changing country')
+                sms_service.next_country()
+                logging.info(f'Now country is {sms_service.get_country_text()}')
+            except:
+                sms_service.set_status_ready(phone_number)
+                break
+                
+        if flagged:
+            raise ValueError(f'Could not get a valid phone number after 3 tries')
 
         # code = input('Code: ')
         logging.info(f'Waiting for code for {phone_number.number}')
@@ -52,6 +86,7 @@ class Bot:
         logging.info('Clicking in Next')
         self.device.tap_by_resource_id('button_text')
 
+        password = Bot._generate_password()
         logging.info('Filling Name and Password')
         logging.info(f'Name: {name}')
         logging.info(f'Password: {password}')
@@ -96,23 +131,31 @@ class Bot:
         logging.info('Skipping Facebook friends')
         self.device.tap_by_resource_id('skip_button')
         self.device.tap_by_resource_id('negative_button')
+        
+        if False:
+            logging.info(f'Picking photo; {image}')
+            self.device.tap_by_resource_id('button_text')
+            self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Choose From Library')
+            self.device.pick_file(image)
+            self.device.tap_by_resource_id('save')
+            self.device.tap_by_resource_id('button_text')
+        else:
+            logging.info('Skipping Profile Photo')
+            self.device.tap_by_resource_id('skip_button')
 
-        logging.info(f'Picking photo; {image}')
-        self.device.tap_by_resource_id('button_text')
-        self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Choose From Library')
-        self.device.pick_file(image)
-        self.device.tap_by_resource_id('save')
-        self.device.tap_by_resource_id('button_text')
-
-        logging.info('Following 3 recommended profiles')
-        for _ in range(3):
+        follow = random.choice([7, 8, 9])
+        logging.info(f'Following {follow} recommended profiles')
+        for _ in range(follow):
             self.device.tap_by_resource_id_and_text('row_recommended_user_follow_button', 'Follow')
             time.sleep(3)
         self.device.tap_by_resource_id('action_bar_button_action')
 
         self.device.swipe_refresh()
-        time.sleep(30)
+        time.sleep(10)
         logging.info('Done')
+        
+        if callback is not None:
+            callback(username, password, phone_number.number, '', '', name)
 
     def dm(self, queue, message_count, get_messages):
         logging.info(f'Will DM {message_count} users')
@@ -221,3 +264,8 @@ class Bot:
             tries -= 1
 
         return None
+        
+    @staticmethod
+    def _generate_password():
+        chars = 'abcdefghkmnpqrstuvwxyz23456789'
+        return ''.join(random.choice(chars) for i in range(8))

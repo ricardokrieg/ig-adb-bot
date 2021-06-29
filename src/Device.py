@@ -95,7 +95,11 @@ class Device:
         for _ in range(100):
             self._swipe(point1, point2, 100)
             try:
-                return self.find_node(f'@resource-id="android:id/numberpicker_input" and @text="{expected_value}"', 1)
+                date_of_birth = self.get_attr_by_resource_id('date_of_birth', 'text', 10)
+                logging.info(f'Device#swipe_numberpicker date_of_birth={date_of_birth}')
+                year = int(date_of_birth.split(' ')[-1])
+                
+                if year <= expected_value: return
             except ValueError:
                 pass
 
@@ -146,6 +150,12 @@ class Device:
         node2 = self.find_node(f'@resource-id="android:id/title" and @text="Downloads"')
         point2 = XMLParser.get_point(node2)
         self._tap(point2)
+        time.sleep(5)
+        
+    def close_intent_filter(self):
+        node = self.find_node(f'@resource-id="android:id/aerr_close"')
+        point = XMLParser.get_point(node)
+        self._tap(point)
         time.sleep(5)
 
     def debug(self):
