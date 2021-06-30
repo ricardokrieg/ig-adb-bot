@@ -1,11 +1,11 @@
 #!/bin/sh
 
-N_ACCOUNTS=10
-i=1
+N_ACCOUNTS=2
+i=0
 
-while [ $i -lte $N_ACCOUNTS ]
+while [ $i -lt $N_ACCOUNTS ]
 do
-  echo "Creating Account #$i"
+  echo "Creating Account #$((i + 1))"
   ((i++))
   
   ./ig-adb-bot/aws/blank/create.sh

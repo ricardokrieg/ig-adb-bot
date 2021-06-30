@@ -16,11 +16,11 @@ echo "InstanceId = ${INSTANCE_ID}"
 echo "PrivateIpAddress = ${PRIVATE_IP_ADDRESS}"
 
 echo Installing on ${INSTANCE_ID}...
-sh ./ig-adb-bot/aws/blank/install.sh ${INSTANCE_ID} ${PRIVATE_IP_ADDRESS}
+sh ./ig-adb-bot/aws/cat/install.sh ${INSTANCE_ID} ${PRIVATE_IP_ADDRESS}
 echo Done!
 
 echo Sign up on ${INSTANCE_ID}
-python3 ./ig-adb-bot/signup_blank.py ${PRIVATE_IP_ADDRESS}:5555
+python3 ./ig-adb-bot/signup_cat.py ${PRIVATE_IP_ADDRESS}:5555
 echo Done!
 
 echo Shutting down ${INSTANCE_ID}

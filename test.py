@@ -1,6 +1,7 @@
 from ppadb.client import Client as AdbClient
 import logging
 import sys
+import time
 
 from src.Device import Device
 
@@ -34,6 +35,18 @@ if __name__ == '__main__':
     print(f'Connected to {adb_device.serial}')
 
     device = Device(adb_device)
+    
+    device.tap_by_content_desc('Camera')
+    time.sleep(2)
+    device.tap_by_resource_id('gallery_folder_menu_alt')
+    device.tap_by_resource_id_and_text('action_sheet_row_text_view', 'Other…')
+    device.pick_file('3.jpg')
+    device.tap_by_resource_id('save')
+    time.sleep(5)
+    device.tap_by_resource_id('next_button_imageview')
+    time.sleep(5)
+    device.tap_by_resource_id('next_button_imageview')
+    time.sleep(10)
 
     # device.debug()
     # device.swipe_refresh()

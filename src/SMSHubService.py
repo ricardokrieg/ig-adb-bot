@@ -35,7 +35,7 @@ class SMSHubService:
         url = f'https://smshub.org/stubs/handler_api.php?api_key={self.api_key}&action=getBalance'
         response = requests.get(url)
 
-        logging.debug(response.text)
+        logging.info(response.text)
 
         match = re.match(r'ACCESS_BALANCE:(.*)', response.text)
 

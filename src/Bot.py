@@ -14,7 +14,7 @@ MAX_ERROR = 2
 class Bot:
     device: Device
 
-    def signup(self, username, name, image, sms_service, callback=None):
+    def signup(self, get_usernames, get_account_name, get_profile_image, get_follow_count, get_posts, sms_service, callback=None):
         logging.info('Closing Intent Filter...')
         self.device.close_intent_filter()
         
@@ -74,7 +74,7 @@ class Bot:
 
         if code is None:
             sms_service.set_status_cancel(phone_number)
-            raise Exception(f'Failed to get SMS Code for {phone_number.number}')
+            raise ValueError(f'Failed to get SMS Code for {phone_number.number}')
 
         sms_service.set_status_done(phone_number)
 
@@ -84,6 +84,7 @@ class Bot:
         logging.info('Clicking in Next')
         self.device.tap_by_resource_id('button_text')
 
+        name = get_account_name()
         password = Bot._generate_password()
         logging.info('Filling Name and Password')
         logging.info(f'Name: {name}')
@@ -101,27 +102,51 @@ class Bot:
         logging.info(f'Year: {year}')
         self.device.swipe_numberpicker(2019, 2020, year)
         self.device.tap_by_resource_id('button_text')
+        
+        generated_username = ''
+        try:
+            generated_username = self.device.get_attr_by_resource_id('field_title_second_line', 'text', 10)
+        except ValueError:
+            generated_username = self.device.get_attr_by_resource_id('field_title', 'text', 10)
+            generated_username = generated_username.split("\n")[1].replace('?', '')
+        logging.info(f'Generated Username: {generated_username}')
 
-        if username is None:
-            try:
-                username = self.device.get_attr_by_resource_id('field_title_second_line', 'text', 10)
-            except ValueError:
-                username = self.device.get_attr_by_resource_id('field_title', 'text', 10)
-                username = username.split("\n")[1].replace('?', '')
-            logging.info(f'Username: {username}')
+        unsername = ''
+        if get_usernames is None:
+            username = generated_username
+            logging.info('Will use generated username')
         else:
-            logging.info('Changing username')
-            self.device.tap_by_resource_id('change_username')
+            usernames = get_usernames(generated_username, name)
+            
+            if usernames is None:
+                username = generated_username
+                logging.info('Will use generated username')
+            else:
+                for tentative_username in usernames:
+                    logging.info('Changing username')
+                    self.device.tap_by_resource_id('change_username')
+        
+                    logging.info('Clearing current username')
+                    self.device.tap_by_resource_id('username')
+                    self.device.clear_input()
+        
+                    logging.info(f'Setting username to {tentative_username}')
+                    self.device.input_text(tentative_username)
+                    time.sleep(len(tentative_username))
+                    
+                    enabled = self.device.get_attr_by_resource_id('button_text', 'enabled', 20)
+                    if enabled == 'true':
+                        logging.info(f'{tentative_username} is available')
+                        logging.info(f'Username: {tentative_username}')
+                        
+                        username = tentative_username
+                        
+                        break
+                    else:
+                        logging.info(f'{tentative_username} is not available')
 
-            logging.info('Clearing auto-generated username')
-            self.device.tap_by_resource_id('username')
-            self.device.clear_input()
-
-            logging.info(f'Setting username to {username}')
-            self.device.input_text(username)
-            time.sleep(len(username))
-
-            logging.info(f'Username: {username}')
+                if username == '':
+                    raise ValueError('Could not find a valid username')
 
         logging.info('Clicking in Next')
         self.device.tap_by_resource_id('button_text')
@@ -130,6 +155,7 @@ class Bot:
         self.device.tap_by_resource_id('skip_button')
         self.device.tap_by_resource_id('negative_button')
         
+        image = get_profile_image()
         if image is None:
             logging.info('Skipping Profile Photo')
             self.device.tap_by_resource_id('skip_button')
@@ -141,7 +167,7 @@ class Bot:
             self.device.tap_by_resource_id('save')
             self.device.tap_by_resource_id('button_text')
 
-        follow = random.choice([7, 8, 9])
+        follow = get_follow_count()
         logging.info(f'Following {follow} recommended profiles')
         for _ in range(follow):
             self.device.tap_by_resource_id_and_text('row_recommended_user_follow_button', 'Follow')
@@ -150,6 +176,22 @@ class Bot:
 
         self.device.swipe_refresh()
         time.sleep(10)
+        
+        for post in get_posts():
+            logging.info(f'Posting image {post}')
+            
+            self.device.tap_by_content_desc('Camera')
+            time.sleep(2)
+            self.device.tap_by_resource_id('gallery_folder_menu_alt')
+            self.device.tap_by_resource_id_and_text('action_sheet_row_text_view', 'Other…')
+            self.device.pick_file(post)
+            self.device.tap_by_resource_id('save')
+            time.sleep(5)
+            self.device.tap_by_resource_id('next_button_imageview')
+            time.sleep(5)
+            self.device.tap_by_resource_id('next_button_imageview')
+            time.sleep(10)
+        
         logging.info('Done')
         
         if callback is not None:
