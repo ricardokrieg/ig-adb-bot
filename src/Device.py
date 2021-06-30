@@ -161,15 +161,15 @@ class Device:
     def debug(self):
         logging.info(etree.tostring(self._dump()))
         
-    def screenshot_debug(self):
+    def screenshot_debug(self, prefix=''):
         timestamp = str(time.time() * 1000).split('.')[0]
         
-        image = f'{timestamp}.png'
+        image = f'{prefix}{timestamp}.png'
         logging.info(f'Saving screenshot to {image}')
         self._shell(f'screencap -p /tmp/{image}')
         self.device.pull(f'/tmp/{image}', image)
         
-        dump = f'{timestamp}.xml'
+        dump = f'{prefix}{timestamp}.xml'
         logging.info(f'Saving dump to {dump}')
         self._shell(f'uiautomator dump /tmp/{dump}')
         self.device.pull(f'/tmp/{dump}', dump)

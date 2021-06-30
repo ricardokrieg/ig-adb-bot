@@ -8,5 +8,5 @@ do
   echo "Creating Account #$((i + 1))"
   ((i++))
   
-  ./ig-adb-bot/aws/cat/create.sh
+  ./ig-adb-bot/aws/travel/create.sh
 done

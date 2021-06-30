@@ -10,7 +10,7 @@ from src.Device import Device
 from src.SMSHubService import SMSHubService
 
 logging.basicConfig(
-    filename='cat.log',
+    filename='fitness.log',
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(module)s - %(funcName)s: %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
@@ -42,7 +42,7 @@ def callback(username, password, phone_number, email, email_password, name):
     logging.info(f'email_password: {email_password}')
     logging.info(f'name: {name}')
     
-    table = dynamodb.Table('ACCOUNTS_CAT')
+    table = dynamodb.Table('ACCOUNTS_FITNESS')
     return table.put_item(
        Item={
             'username': username,
@@ -58,7 +58,7 @@ def callback(username, password, phone_number, email, email_password, name):
 def get_account_name():
     adjs = [
         "autumn", "hidden", "bitter", "misty", "silent", "empty", "dry", "dark",
-        "summer", "icy", "quiet", "white", "cool", "spring", "winter",
+        "summer", "icy", "delicate", "quiet", "white", "cool", "spring", "winter",
         "patient", "twilight", "dawn", "crimson", "wispy", "weathered", "blue",
         "billowing", "broken", "cold", "damp", "falling", "frosty", "green",
         "long", "late", "lingering", "bold", "little", "morning", "muddy", "old",
@@ -82,18 +82,22 @@ def get_account_name():
     sample_adj = random.choice(adjs).capitalize()
     sample_noun = random.choice(nouns).capitalize()
     
-    return ' '.join([sample_adj, sample_noun, 'Cat'])
+    return ' '.join([sample_adj, sample_noun, 'Fitness'])
     
 def get_usernames(generated_username, name):
-    if 'cat' in generated_username.lower(): return None
+    if 'fitness' in generated_username.lower(): return None
     
     return [
-        generated_username + "cat",
-        generated_username + ".cat",
-        generated_username + "_cat",
-        generated_username + "__cat",
-        generated_username + "cat_",
-        generated_username + "cat__",
+        generated_username + "fit",
+        generated_username + "fitness",
+        generated_username + ".fit",
+        generated_username + ".fitness",
+        generated_username + "_fit",
+        generated_username + "_fitness",
+        generated_username + "__fit",
+        generated_username + "__fitness",
+        generated_username + "fit_",
+        generated_username + "fitness_",
     ]
     
 def get_profile_image():
@@ -130,5 +134,5 @@ if __name__ == '__main__':
     try:
         bot.signup(get_usernames, get_account_name, get_profile_image, get_follow_count, get_posts, sms_service, callback)
     except ValueError as error:
-        bot.device.screenshot_debug('cat_')
+        bot.device.screenshot_debug('fitness_')
         raise error

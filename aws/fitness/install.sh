@@ -18,3 +18,11 @@ done
 ~/platform-tools/adb connect $2:5555
 
 ~/platform-tools/adb -s $2:5555 install ./ig-adb-bot/resources/instagram.apk
+
+i=1
+ls ./ig-adb-bot/aws/fitness/images |sort -R |tail -3 |while read file; do
+  cp ./ig-adb-bot/aws/fitness/images/$file $i.jpg
+  ~/platform-tools/adb -s $2:5555 push $i.jpg /sdcard/Download/
+  rm $i.jpg
+  ((i++))
+done

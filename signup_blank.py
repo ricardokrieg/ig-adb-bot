@@ -3,6 +3,7 @@ import sys
 from ppadb.client import Client as AdbClient
 import boto3
 import random
+from datetime import date
 
 from src.Bot import Bot
 from src.Device import Device
@@ -50,6 +51,7 @@ def callback(username, password, phone_number, email, email_password, name):
             'email': email,
             'email_password': email_password,
             'name': name,
+            'registered_at': date.today().strftime("%Y-%m-%d"),
         }
     )
 
@@ -103,5 +105,9 @@ if __name__ == '__main__':
 
     sms_service = SMSHubService()
     bot = Bot(device)
-
-    bot.signup(None, accountName, None, sms_service, callback)
+    
+    try:
+        bot.signup(None, get_account_name, None, None, None, sms_service, callback)
+    except ValueError as error:
+        bot.device.screenshot_debug()
+        raise error

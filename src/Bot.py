@@ -155,11 +155,11 @@ class Bot:
         self.device.tap_by_resource_id('skip_button')
         self.device.tap_by_resource_id('negative_button')
         
-        image = get_profile_image()
-        if image is None:
+        if get_profile_image is None:
             logging.info('Skipping Profile Photo')
             self.device.tap_by_resource_id('skip_button')
         else:
+            image = get_profile_image()
             logging.info(f'Picking photo; {image}')
             self.device.tap_by_resource_id('button_text')
             self.device.tap_by_resource_id_and_text('row_simple_text_textview', 'Choose From Library')
@@ -167,30 +167,36 @@ class Bot:
             self.device.tap_by_resource_id('save')
             self.device.tap_by_resource_id('button_text')
 
-        follow = get_follow_count()
-        logging.info(f'Following {follow} recommended profiles')
-        for _ in range(follow):
-            self.device.tap_by_resource_id_and_text('row_recommended_user_follow_button', 'Follow')
-            time.sleep(3)
+        if get_follow_count is None:
+            logging.info(f'Skip follow')
+        else:
+            follow = get_follow_count()
+            logging.info(f'Following {follow} recommended profiles')
+            for _ in range(follow):
+                self.device.tap_by_resource_id_and_text('row_recommended_user_follow_button', 'Follow')
+                time.sleep(3)
         self.device.tap_by_resource_id('action_bar_button_action')
 
         self.device.swipe_refresh()
         time.sleep(10)
         
-        for post in get_posts():
-            logging.info(f'Posting image {post}')
-            
-            self.device.tap_by_content_desc('Camera')
-            time.sleep(2)
-            self.device.tap_by_resource_id('gallery_folder_menu_alt')
-            self.device.tap_by_resource_id_and_text('action_sheet_row_text_view', 'Other…')
-            self.device.pick_file(post)
-            self.device.tap_by_resource_id('save')
-            time.sleep(5)
-            self.device.tap_by_resource_id('next_button_imageview')
-            time.sleep(5)
-            self.device.tap_by_resource_id('next_button_imageview')
-            time.sleep(10)
+        if get_posts is None:
+            logging.info(f'Skip posts')
+        else:
+            for post in get_posts():
+                logging.info(f'Posting image {post}')
+                
+                self.device.tap_by_content_desc('Camera')
+                time.sleep(2)
+                self.device.tap_by_resource_id('gallery_folder_menu_alt')
+                self.device.tap_by_resource_id_and_text('action_sheet_row_text_view', 'Other…')
+                self.device.pick_file(post)
+                self.device.tap_by_resource_id('save')
+                time.sleep(5)
+                self.device.tap_by_resource_id('next_button_imageview')
+                time.sleep(5)
+                self.device.tap_by_resource_id('next_button_imageview')
+                time.sleep(10)
         
         logging.info('Done')
         
